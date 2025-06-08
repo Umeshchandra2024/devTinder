@@ -19,21 +19,35 @@ const {adminAuth, userAuth} = require("./middlewares/auth")
 // app.get("/ab+c", (req,res) => {
 //     res.send("hHAAHAHAHHA");
 // });
-app.use("/admin", adminAuth);
 
-app.get("/user", userAuth, (req, res) => {
-    res.send("user is authorized");
-});
+app.use("/getUserData", (req, res) => {
 
-app.get("/admin/getAllData", (req, res) => {
-    //logic of checking if the request is authorized
-   res.send("All data sent");
+
+    throw new Error("dj");
+    res.send("user Data sent");
     
 });
 
-app.get("/admin/deleteUser", (req, res) => {
-    res.send("Deleted a user");
+app.use("/", (err, req, res, next) => {
+    if(err){
+        res.status(500).send("something went wrong");
+    }
 });
+// app.use("/admin", adminAuth);
+
+// app.get("/user", userAuth, (req, res) => {
+//     res.send("user is authorized");
+// });
+
+// app.get("/admin/getAllData", (req, res) => {
+//     //logic of checking if the request is authorized
+//    res.send("All data sent");
+    
+// });
+
+// app.get("/admin/deleteUser", (req, res) => {
+//     res.send("Deleted a user");
+// });
 
 // app.use("/user", (req, res, next) => {
 //     console.log("response1");
