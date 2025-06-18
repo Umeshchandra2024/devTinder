@@ -2,27 +2,116 @@ const express = require('express');
 
 const app = express();
 const connectDB = require("./config/database");
-const {adminAuth, userAuth} = require("./middlewares/auth");
-const User = require("./models/user");  
 
-app.post("/signup", async (req,res) => {
-  
-    const user = new User({
-        firstName: "virat",
-        lastName: "kohli",
-        emailId: "virat@123",
-        password: "virat123"
-    });
-    try{
-        await user.save();
-        res.send("user added successfully");
-    }
-    catch(err) {
-        res.status(400).send("Error saving the user:"+ err.message);
-    }
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
-    
-});
+//here we use the middleware which is monster
+app.use(express.json());
+app.use(cookieParser());
+
+//routes middlewares
+const authRouter = require("./routes/auth");
+const profileRouter = require("./routes/profile");
+const requestRouter = require("./routes/request");
+
+
+app.use("/", authRouter);
+app.use("/", profileRouter);
+app.use("/", requestRouter);
+
+
+
+
+
+
+
+//Feed API Which is GET
+// the below is the findById model api
+// app.get("/feed", async (req, res) => {
+//     const userId = req.body._id;
+//     try{
+//         const users = await User.findById({_id: userId});
+//         res.send(users);
+//     }
+//     catch(err){
+//         res.status(400).send("something went wrong");
+//     }
+// });
+
+// app.delete("/userDel", async (req, res) => {
+//     const userId = req.body.userId;
+//     try {
+//         const users = await User.findByIdAndDelete({_id: userId});
+
+//         res.send("user deleted successfully");
+
+//     }catch(err) {
+//         res.status(400).send("Something went Wrong");
+//     }
+// });
+
+// app.patch("/user/:userId", async (req, res) => {
+//     const userId = req.params?.userId;
+//     const data = req.body;
+
+//     try{
+//         const ALLOWED_UPDATES = [
+//             "photoUrl",
+//             "about",
+//             "gender",
+//             "age",
+//             "skills",
+//         ];
+//         const isUpdateAllowed = Object.keys(data).every((k) => 
+//             ALLOWED_UPDATES.includes(k)
+//         );
+//         if(!isUpdateAllowed){
+//             throw new Error("Update not Allowed");
+//         }
+//         if(data?.skills.length > 10){
+//             throw new Error("skills cannot be more than 10");
+//         }
+//         const users = await User.findByIdAndUpdate({_id: userId}, data, {
+//             returnDocument: "after",
+//             runValidators: true,
+//         });
+//         // console.log(users);
+
+//         res.send("user Updated successfully");
+
+
+//     }catch(err){
+//         res.status(400).send("UPDATE FAILED:" + err.message);
+//     }
+
+
+// })
+
+// app.get("/user", async (req, res) => {
+//     const email = req.body.emailId;
+//     try{
+
+//         const user = await User.findOne({emailId: email});
+        
+//         if(!user){
+//             res.status(404).send("user not found");
+//         }
+//         else{
+//             res.send(user);
+//         }
+//         // if(user.length === 0){
+//         //     res.status(404).send("user not found");
+//         // }
+//         // else{
+//         //     res.send(user);
+//         // }
+        
+//     }
+//     catch(err){
+//         res.status(400).send("something went wrong");
+//     }
+// });
 // app.use((req,res) => {
 //     res.send("Hello from devTinder server");
 // });
@@ -130,7 +219,7 @@ connectDB().then(() => {
 });
 })
 .catch((err) => {
-    console.log("Database cannot be connected!!")
+    console.log("Database is not  connected!!");
 });
 
 
