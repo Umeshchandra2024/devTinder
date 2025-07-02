@@ -24,14 +24,14 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
             throw new Error("Invalid Edit Request");
         }
         const loggedInUser = req.user;
-        console.log(loggedInUser);
+        // console.log(loggedInUser);
         Object.keys(req.body).forEach((key) => (loggedInUser[key] = req.body[key]));
         //note changed
         if(loggedInUser?.skills.length > 10) {
             throw new Error("skills length should be below 10");
         }
 
-        console.log(loggedInUser);
+        // console.log(loggedInUser);
         await loggedInUser.save();
 
         res.json({message: `${loggedInUser.firstName}, Your Profile Updated Successfully!!`, data: loggedInUser});
