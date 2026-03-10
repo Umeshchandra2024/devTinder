@@ -80,12 +80,21 @@ const userSchema = new mongoose.Schema({
     timestamps: true,
 });
 
-userSchema.methods.getJWT = async function() {
-    const user = this;
-    const token = await jwt.sign({_id: user._id}, "Umdestroy@11", {expiresIn: "1d"});
+userSchema.methods.getJWT = async function () {
+  const user = this;
 
-    return token;
-}
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined in environment variables");
+  }
+
+  const token = await jwt.sign(
+    { _id: user._id },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  return token;
+};
 
 userSchema.methods.validatePassword = async function(passwordInputByUser) {
     const user = this;

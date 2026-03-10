@@ -9,10 +9,14 @@ const userAuth = async (req, res, next) => {
       return res.status(401).json({ message: "Authentication token missing" });
     }
 
-    const decodedObj = await jwt.verify(
-      token,
-      process.env.JWT_SECRET || "dev-secret"
-    );
+    if (!process.env.JWT_SECRET) {
+      console.error("[AUTH] JWT_SECRET is not set");
+      return res
+        .status(500)
+        .json({ message: "Server configuration error: JWT secret missing" });
+    }
+
+    const decodedObj = await jwt.verify(token, process.env.JWT_SECRET);
 
     const { _id } = decodedObj;
     const user = await User.findById(_id);
