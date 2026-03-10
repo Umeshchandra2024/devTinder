@@ -1,83 +1,89 @@
 const express = require("express");
 const authRouter = express.Router();
 
-
 const User = require("../models/user");
-const {validateSignUpData} = require("../utils/validation");
+const { validateSignUpData } = require("../utils/validation");
 const bcrypt = require("bcrypt");
 
+authRouter.post("/signup", async (req, res) => {
+  try {
+    validateSignUpData(req);
 
+    const { firstName, lastName, emailId, password } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10);
 
-authRouter.post("/signup", async (req,res) => {
-    try{
-        //validation of the data
-        validateSignUpData(req);
+    const user = new User({
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
+    });
 
-        const {firstName, lastName, emailId, password} = req.body;
-        // Encrypt the password
+    await user.save();
 
-        const passwordHash = await bcrypt.hash(password, 10);
-        // console.log(passwordHash);
-        // above 10 is the saltRounds
-
-
-        //  creating a new instance of the User Model
-        const user = new User({
-            firstName,
-            lastName,
-            emailId,
-            password: passwordHash,
-        });
-        await user.save();
-        res.send("user added successfully");
-    }
-    catch(err) {
-        res.status(400).send("ERROR :"+ err.message);
-    }
-
-    
+    res.status(201).json({
+      message: "User registered successfully",
+      data: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailId: user.emailId,
+      },
+    });
+  } catch (err) {
+    console.error("[AUTH] Signup error:", err.message);
+    res.status(400).json({ message: err.message });
+  }
 });
 
 authRouter.post("/login", async (req, res) => {
-    try {
-        const {emailId, password} = req.body;
+  try {
+    const { emailId, password } = req.body;
 
-        const user = await User.findOne({emailId: emailId});
-        if(!user) {
-            throw new Error("Invalid Credentials");
-        }
-        //now password
-        const isPasswordValid = await user.validatePassword(password);
-        if(isPasswordValid) {
-            //create a JWT Token
-            const token = await user.getJWT();
-            // console.log(token);
-
-
-            //Add the token to the cookie and send the response back to the user
-            res.cookie("token", token, { expires: new Date(Date.now() + 8 * 3600000), httpOnly: true });
-
-            res.send(user);
-        }
-        else{
-            throw new Error("Invalid Credentials");
-        }
-
-        }
-    catch(err) {
-        res.status(400).send("ERROR :"+ err.message);
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    const isPasswordValid = await user.validatePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-});
-authRouter.post("/logout", (req, res) => {
-    //no need any auth because we are logging out
-    res.cookie("token", null, {
-        expires: new Date(Date.now()),
+    const token = await user.getJWT();
+
+    res.cookie("token", token, {
+      expires: new Date(Date.now() + 8 * 3600000),
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     });
-    res.send("Logout successfull!!!");
+
+    res.json({
+      message: "Login successful",
+      data: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailId: user.emailId,
+      },
+    });
+  } catch (err) {
+    console.error("[AUTH] Login error:", err.message);
+    res.status(400).json({ message: err.message });
+  }
 });
 
+authRouter.post("/logout", (req, res) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
+
+  res.json({ message: "Logout successful" });
+});
 
 module.exports = authRouter;
 

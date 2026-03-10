@@ -1,4 +1,5 @@
-const express = require('express');
+const express = require("express");
+require("dotenv").config();
 
 const app = express();
 const connectDB = require("./config/database");
@@ -7,25 +8,35 @@ const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
-//here we use the middleware which is monster
-app.use(cors({
-    origin: "http://localhost:5173",
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+app.use(
+  cors({
+    origin: FRONTEND_URL,
     credentials: true,
-}));
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
-//routes middlewares
 const authRouter = require("./routes/auth");
 const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 
-
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
+
+app.use((req, res, next) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error("[APP] Unhandled error:", err);
+  res.status(500).json({ message: "Internal server error" });
+});
 
 
 
@@ -219,14 +230,17 @@ app.use("/", userRouter);
 //     res.send("hello from dashboard");
 // }); 
 
-connectDB().then(() => {
+const PORT = process.env.PORT || 7777;
+
+connectDB()
+  .then(() => {
     console.log("Database connection is established...");
-    app.listen(7777, () => {
-    console.log("server is running on port 7777....");
-});
-})
-.catch((err) => {
-    console.log("Database is not  connected!!");
-});
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}....`);
+    });
+  })
+  .catch((err) => {
+    console.log("Database is not connected!!", err.message);
+  });
 
 

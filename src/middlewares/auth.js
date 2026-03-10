@@ -2,33 +2,33 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
 const userAuth = async (req, res, next) => {
-    try{
-        //Read the token from the req cookies
-        
-        const {token} = req.cookies;
-        if(!token) {
-            throw new Error("Token is not Valid !!!");
-        }
+  try {
+    const { token } = req.cookies;
 
-        const decodedObj = await jwt.verify(token, "Umdestroy@11");
-
-        const { _id } = decodedObj;
-        const user = await User.findById(_id);
-
-        if(!user) {
-            throw new Error("User not found");
-        }
-
-        req.user = user;
-        next();
-    }
-    catch(err) {
-        res.status(400).send("ERROR: " + err.message);
+    if (!token) {
+      return res.status(401).json({ message: "Authentication token missing" });
     }
 
-    // Find the user
+    const decodedObj = await jwt.verify(
+      token,
+      process.env.JWT_SECRET || "dev-secret"
+    );
+
+    const { _id } = decodedObj;
+    const user = await User.findById(_id);
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found for token" });
+    }
+
+    req.user = user;
+    next();
+  } catch (err) {
+    console.error("[AUTH] Authentication failed:", err.message);
+    res.status(401).json({ message: "Authentication failed" });
+  }
 };
-// The below is the exports
+
 module.exports = {
-    userAuth,
+  userAuth,
 };
